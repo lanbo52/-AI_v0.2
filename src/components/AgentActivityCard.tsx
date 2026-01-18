@@ -154,7 +154,9 @@ export const AgentActivityCard: React.FC<AgentActivityCardProps> = ({ state, rol
                                     {state.logs.map((log, i) => (
                                         <div key={i} className="text-slate-700 break-words flex gap-2">
                                             <span className="text-slate-400 shrink-0">[{i + 1}]</span>
-                                            <span>{log}</span>
+                                            <div className="prose prose-sm max-w-none text-xs leading-relaxed flex-1">
+                                                <Markdown>{log}</Markdown>
+                                            </div>
                                         </div>
                                     ))}
                                     {state.status === 'working' && (

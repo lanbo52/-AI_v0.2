@@ -367,18 +367,27 @@ export const AGENT_PROMPTS = {
 
 **输入**:
 - 当前创作阶段 (currentStage)
-- 最近的对话历史 (特别是用户的最后一条回复和 AI 的回复)
+- 最近的对话历史 (User 和 AI 的消息)
+
+**⚠️ 核心判定原则**:
+hasSaveIntent 为 true 的**唯一条件**是：**用户（User）的最后一条消息**明确表达了确认意图。
 
 **判定逻辑**:
-1. **用户确认意图**: 用户是否表达了"满意"、"确认"、"没问题"、"下一步"、"继续"等意图？
-2. **系统日志优先**: 如果最近 System Log 显示“质检通过/已保存/已自动推进”，则视为该阶段已完成动作，不要建议重复保存或重复质检。\n   - 除非用户明确要求“重新质检/再校验一次”。\n3. **内容完整性**: 当前阶段的内容是否已经讨论充分？\n4. **强制再校验识别**: 仅当用户明确提出“再校验/重新质检/再审核”，才将 forceRevalidate 置为 true。
+1. **用户确认意图**: 用户的最后一条消息是否包含"满意"、"确认"、"没问题"、"好的"、"可以"、"下一步"、"继续"、"提交"等确认词语？
+   - ✅ 如果用户说"好的，没问题"，则 hasSaveIntent = true
+   - ❌ 如果用户说"我想改一下..."或提出问题，则 hasSaveIntent = false
+   - ❌ 如果最后一条消息是 AI 的回复（即使 AI 说"确认后我将保存"），则 hasSaveIntent = false，因为**用户还没有回复确认**
+2. **系统日志优先**: 如果最近 System Log 显示"质检通过/已保存/已自动推进"，则该阶段已完成，不要重复保存。
+3. **强制再校验识别**: 仅当用户明确提出"再校验/重新质检/再审核"，才将 forceRevalidate 置为 true。
 
 **输出**:
 返回一个 JSON 对象：
 {
-  "hasSaveIntent": boolean, // 是否检测到保存/确认意图
+  "hasSaveIntent": boolean, // 只有用户明确确认时才为 true
   "targetFile": "string", // 应该保存的文件名 (world.md, characters.md, outline.md)
-  "reason": "string",\n  \"recommendedAction\": \"save\" | \"advance\" | \"none\", // 推荐动作\n  \"forceRevalidate\": boolean, // 用户是否强制要求再校验\n  \"advanceToStage\": \"world\" | \"characters\" | \"outline\" | \"production\" | \"episode\" | \"storyboard\" | \"prompts\" // 可选，建议推进到哪个阶段
+  "reason": "string",
+  "recommendedAction": "save" | "advance" | "none",
+  "forceRevalidate": boolean
 }
 `,
 

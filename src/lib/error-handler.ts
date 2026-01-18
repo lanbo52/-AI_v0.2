@@ -27,7 +27,7 @@ class ErrorHandler {
     private logs: ErrorLogEntry[] = [];
     private maxLogs = 1000;
 
-    private constructor() {}
+    private constructor() { }
 
     static getInstance(): ErrorHandler {
         if (!ErrorHandler.instance) {
@@ -49,9 +49,9 @@ class ErrorHandler {
         // 控制台输出（开发环境）
         if (import.meta.env.DEV) {
             const consoleMethod = level === 'debug' ? console.debug :
-                                level === 'info' ? console.info :
-                                level === 'warn' ? console.warn :
-                                console.error;
+                level === 'info' ? console.info :
+                    level === 'warn' ? console.warn :
+                        console.error;
 
             const prefix = `[${level.toUpperCase()}]`;
             if (context?.component) {
@@ -68,7 +68,7 @@ class ErrorHandler {
         }
 
         // TODO: 生产环境可发送到错误监控服务（Sentry等）
-        if (import.meta.env.PROD && level === 'error' || level === 'critical') {
+        if (import.meta.env.PROD && (level === 'error' || level === 'critical')) {
             this.reportToMonitoring(entry);
         }
     }
@@ -126,8 +126,8 @@ class ErrorHandler {
     // 数据库错误处理
     handleDbError(error: any, operation: string, context?: ErrorContext): void {
         this.error(`Database ${operation} error: ${error.message || error}`,
-                  error instanceof Error ? error : new Error(String(error)),
-                  { ...context, function: operation });
+            error instanceof Error ? error : new Error(String(error)),
+            { ...context, function: operation });
     }
 
     // 获取最近日志

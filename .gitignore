@@ -16,6 +16,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+*.tsbuildinfo
+coverage/
+
 .agent/
 .ai_memory/
 .claude/

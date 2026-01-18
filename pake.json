@@ -1,0 +1,19 @@
+{
+    "name": "CinemaForge-Lite",
+    "icon": "src/assets/icon.png",
+    "version": "0.2.0",
+    "url": "dist/index.html",
+    "fullscreen": false,
+    "resizable": true,
+    "width": 1200,
+    "height": 780,
+    "alwaysOnTop": false,
+    "dark": true,
+    "transparent": false,
+    "userAgent": "",
+    "showMenu": false,
+    "showSystemTray": false,
+    "systemTrayIcon": "",
+    "iterCopyFile": false,
+    "targets": "dmg"
+}

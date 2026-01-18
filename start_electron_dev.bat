@@ -1,7 +1,7 @@
 @echo off
 chcp 65001
 echo ==========================================
-echo       CinemaForge 网页版启动脚本
+echo     CinemaForge 桌面版（Electron）启动脚本
 echo ==========================================
 
 cd /d "%~dp0"
@@ -30,11 +30,18 @@ if not exist "node_modules" (
   )
 )
 
-echo 正在打开默认浏览器...
-start http://localhost:3000
+echo 正在启动 Vite 开发服务器（新窗口）...
+start "CinemaForge Vite" powershell -NoExit -Command "cd '%~dp0'; npm run dev"
 
-echo 正在启动开发服务器...
-echo 请保持此窗口开启，关闭窗口将停止服务。
+echo 等待开发服务器初始化...
+timeout /t 2 /nobreak >nul
+
+echo 正在启动 Electron（新窗口）...
+start "CinemaForge Electron" powershell -NoExit -Command "cd '%~dp0'; npm run electron:dev"
+
 echo.
+echo 已启动：Vite + Electron
+echo 如需关闭，请分别关闭两个窗口。
+echo.
+pause
 
-npm run dev

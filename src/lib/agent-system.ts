@@ -178,14 +178,20 @@ export class AgentSystem {
 
         for (let i = history.length - 1; i >= 0; i--) {
             const msg = history[i];
-            const content =
-                msg.role === 'system' && (msg as any).activityLog
-                    ? `System Log: [${(msg as any).activityLog.status}] ${(msg as any).activityLog.task} (${(msg as any).activityLog.role})`
-                    : msg.content;
+
+            // 处理系统日志消息：转换为 assistant 角色，让AI能理解这是对话的一部分
+            const isSystemLog = msg.role === 'system' && (msg as any).activityLog;
+            const content = isSystemLog
+                ? `[系统通知] ${(msg as any).activityLog.status === 'success' ? '✅' : '❌'} ${(msg as any).activityLog.task}${(msg as any).activityLog.validationFeedback ? `\n详情: ${(msg as any).activityLog.validationFeedback}` : ''}`
+                : msg.content;
+
+            // 系统日志作为 assistant 消息，其他保持原有角色
+            const role: ChatMessage['role'] = isSystemLog ? 'assistant' : (msg.role as ChatMessage['role']);
+
             const contentLen = content.length;
 
             if (currentHistorySize + contentLen < availableChars) {
-                historyMessages.unshift({ role: msg.role as ChatMessage['role'], content });
+                historyMessages.unshift({ role, content });
                 currentHistorySize += contentLen;
             } else {
                 break;

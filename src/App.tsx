@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { AgentMessage, ChatSession, AgentState } from './lib/types';
 import { ProjectManager } from './components/ProjectManager';
-import { ScriptEditor } from './components/editors/ScriptEditor';
-import { EpisodeWorkspace } from './components/EpisodeWorkspace';
 import { EpisodeProgress } from './components/EpisodeProgress';
-import { EpisodeLevelMap } from './components/EpisodeLevelMap';
-import { Home, FileText, Clapperboard, ChevronRight, Plus, ChevronDown, RefreshCcw, ListTodo, Map, Lock } from 'lucide-react';
+import { Home, ChevronRight, ListTodo, Map, Lock } from 'lucide-react';
 import { AssistantSidebar } from './components/AssistantSidebar';
 import { safeMarkedParse } from './lib/markdown-utils';
 import { useAgentSystem } from './hooks/useAgentSystem';
@@ -13,8 +10,8 @@ import { ConfirmModal } from './components/ConfirmModal';
 import { ContextLoader } from './lib/context-loader';
 import { STORAGE_KEYS, UI_CONSTANTS } from './lib/constants';
 import { StageNavigation } from './components/StageNavigation';
-import { StageDefinition, STAGE_CONFIG } from './lib/agent-state-machine';
 import { projectAPI } from './lib/db';
+import { WorkspaceArea } from './components/WorkspaceArea';
 
 interface EditorHandle {
     getContent: () => string;
@@ -96,6 +93,13 @@ function App() {
         }
     });
 
+    // [NEW] 适配器：将 action 对象转换为 handleAutoFix 的参数调用
+    const handleAutoFixAction = React.useCallback((action: NonNullable<AgentMessage['action']>) => {
+        if (action.targetFile && action.feedback) {
+            handleAutoFix(action.targetFile, action.feedback, action.originalContent);
+        }
+    }, [handleAutoFix]);
+
     const toggleEpisodeProgress = () => {
         const newVal = !showEpisodeProgress;
         setShowEpisodeProgress(newVal);
@@ -171,12 +175,6 @@ function App() {
     if (!currentProjectId) {
         return <ProjectManager onSelectProject={handleSelectProject} />;
     }
-
-    const isEpisodeMode = activeView === 'episode';
-    const isMapMode = activeView === 'episode_map';
-
-    // 在 episode 视图使用悬浮助手，不显示侧边栏
-
 
     return (
         <div className="h-screen flex flex-col app-background text-zinc-900 overflow-hidden font-sans">
@@ -296,78 +294,33 @@ function App() {
                 }}
             >
                 <div className="flex-1 flex flex-col relative overflow-hidden">
-
-                    {activeView === 'episode_map' && (
-                        <EpisodeLevelMap
-                            episodes={episodeProgress}
-                            currentEpisodePath={currentEpisodePath}
-                            onSelect={(path) => {
-                                setCurrentEpisodePath(path);
-                                setActiveView('episode');
-                            }}
-                            onCreateEpisode={handleCreateEpisode}
-                        />
-                    )}
-
-                    {activeView === 'world' && (
-                        <ScriptEditor
-                            projectId={currentProjectId}
-                            filePath="world.md"
-                            readOnly={isBackgroundLocked}
-                            onStatusChange={handleEditorStatusChange}
-                            showChat={!!showChat}
-                            onToggleChat={toggleChat}
-                            onRegister={handleRegisterEditor}
-                        />
-                    )}
-                    {activeView === 'characters' && (
-                        <ScriptEditor
-                            projectId={currentProjectId}
-                            filePath="characters.md"
-                            readOnly={isBackgroundLocked}
-                            onStatusChange={handleEditorStatusChange}
-                            showChat={!!showChat}
-                            onToggleChat={toggleChat}
-                            onRegister={handleRegisterEditor}
-                        />
-                    )}
-                    {activeView === 'outline' && (
-                        <ScriptEditor
-                            projectId={currentProjectId}
-                            filePath="outline.md"
-                            readOnly={isBackgroundLocked}
-                            onStatusChange={handleEditorStatusChange}
-                            showChat={!!showChat}
-                            onToggleChat={toggleChat}
-                            onRegister={handleRegisterEditor}
-                        />
-                    )}
-                    {activeView === 'episode' && (
-                        <EpisodeWorkspace
-                            projectId={currentProjectId}
-                            episodeId={currentEpisodePath.split('/').pop()?.replace('.md', '') || 'EP-01'}
-                            episodePath={currentEpisodePath}
-                            onStatusChange={handleEditorStatusChange}
-                            onRegister={handleRegisterEditor}
-                            onRunDirector={runDirectorAgent}
-                            // Assistant props
-                            messages={projectChats[currentProjectId] || []}
-                            history={projectHistory[currentProjectId] || []}
-                            currentSessionId={currentSessionIds[currentProjectId] || null}
-                            isTyping={isTyping}
-                            agentState={agentState}
-                            onSendMessage={handleSendMessage}
-                            onLoadSession={(sid) => handleLoadSession(currentProjectId, sid)}
-                            onDeleteSession={(sid) => handleDeleteSession(currentProjectId, sid)}
-                            onNewSession={handleNewSession}
-                            onClearHistory={() => handleClearHistory(currentProjectId)}
-                            onAutoFix={handleAutoFix}
-                            onApplyContent={handleApplyContent}
-                            // Global Chat Control
-                            showChat={showChat}
-                            onToggleChat={toggleChat}
-                        />
-                    )}
+                    <WorkspaceArea
+                        projectId={currentProjectId}
+                        activeView={activeView}
+                        currentEpisodePath={currentEpisodePath}
+                        isBackgroundLocked={isBackgroundLocked}
+                        showChat={showChat}
+                        episodeProgress={episodeProgress}
+                        projectChats={projectChats}
+                        projectHistory={projectHistory}
+                        currentSessionIds={currentSessionIds}
+                        isTyping={isTyping}
+                        agentState={agentState}
+                        onRegisterEditor={handleRegisterEditor}
+                        onStatusChange={handleEditorStatusChange} // Use the wrapper one
+                        onToggleChat={toggleChat}
+                        onSetCurrentEpisodePath={setCurrentEpisodePath}
+                        onSetActiveView={setActiveView}
+                        onCreateEpisode={handleCreateEpisode}
+                        onRunDirector={runDirectorAgent}
+                        onSendMessage={handleSendMessage}
+                        onLoadSession={(sid) => handleLoadSession(currentProjectId, sid)}
+                        onDeleteSession={(sid) => handleDeleteSession(currentProjectId, sid)}
+                        onNewSession={handleNewSession}
+                        onClearHistory={() => handleClearHistory(currentProjectId)}
+                        onAutoFix={handleAutoFixAction}
+                        onApplyContent={handleApplyContent}
+                    />
                 </div>
 
                 {showEpisodeProgress && activeView === 'episode' && (
@@ -400,7 +353,7 @@ function App() {
                         onNewSession={handleNewSession}
                         onClearHistory={() => handleClearHistory(currentProjectId)}
                         onSendMessage={handleSendMessage}
-                        onAutoFix={handleAutoFix}
+                        onAutoFix={handleAutoFixAction}
                         onApplyContent={handleApplyContent}
                     />
                 )}
