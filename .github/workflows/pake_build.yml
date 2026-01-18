@@ -25,7 +25,7 @@ jobs:
         run: npm run build
 
       - name: Build Pake App
-        uses: tw93/pake-action@v1.4.0
+        uses: tw93/pake@main
         with:
           # Use the pake.json configuration
           targets: 'dmg'
